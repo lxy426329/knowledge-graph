@@ -1,0 +1,46 @@
+{
+  "num_disease_classes": 5,
+  "disease_class_keys": [
+    "Cataract",
+    "Conjunctivitis",
+    "Eyelid",
+    "Uveitis",
+    "Normal"
+  ],
+  "disease_class_names": [
+    "白内障",
+    "结膜炎",
+    "眼睑疾病",
+    "葡萄膜炎",
+    "正常"
+  ],
+  "class_map": {
+    "Cataract": "白内障",
+    "Conjunctivitis": "结膜炎",
+    "Eyelid": "眼睑疾病",
+    "Uveitis": "葡萄膜炎",
+    "Normal": "正常"
+  },
+  "high_risk_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "high_risk_keys": [
+    "Cataract",
+    "Conjunctivitis",
+    "Eyelid",
+    "Uveitis"
+  ],
+  "class_counts": [
+    544,
+    357,
+    525,
+    223,
+    649
+  ],
+  "train_size": 1608,
+  "val_size": 344,
+  "test_size": 346
+}
