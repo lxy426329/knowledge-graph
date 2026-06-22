@@ -86,7 +86,7 @@ def tool_node_with_monitor(state: AgentState) -> dict:
             result = json.dumps(result, ensure_ascii=False)
 
         tool_messages.append(
-            ToolMessage(content=result, tool_call_id=tool_id)
+            ToolMessage(content=result, tool_call_id=tool_id, name=tool_name)
         )
 
         # 检查是否调用了 fill_context_for_report
@@ -128,7 +128,7 @@ class ReactAgent:
         self.agent = create_agent()
 
     def execute_stream(self, query: str, history: list[dict] = None):
-        # 构建历史消息列表
+        # 构建历史消息列表（history已包含当前用户消息，不再重复添加）
         messages = []
         if history:
             for msg in history:
@@ -137,15 +137,48 @@ class ReactAgent:
                 elif msg["role"] == "assistant":
                     messages.append({"role": "assistant", "content": msg["content"]})
 
+        # 如果history为空，则添加当前提问
+        if not messages:
+            messages.append({"role": "user", "content": query})
+
         input_dict = {
             "messages": messages,
             "is_report": False,
         }
 
-        for chunk in self.agent.stream(input_dict, stream_mode="values"):
-            latest_message = chunk["messages"][-1]
-            if isinstance(latest_message, AIMessage) and latest_message.content:
-                yield latest_message.content.strip() + "\n"
+        step_num = 0
+        # 记录已处理的消息数量，只处理新增的消息
+        prev_msg_count = len(messages)
+
+        for chunk in self.agent.stream(input_dict, stream_mode="values", config={"recursion_limit": 10}):
+            all_messages = chunk["messages"]
+            # 只看新增的消息（跳过输入的历史消息）
+            if len(all_messages) <= prev_msg_count:
+                continue
+
+            # 处理所有新增的消息（可能有多条工具调用和工具结果）
+            for msg in all_messages[prev_msg_count:]:
+                # 追踪工具调用：当AI决定调用工具时
+                if isinstance(msg, AIMessage) and msg.tool_calls:
+                    step_num += 1
+                    for tool_call in msg.tool_calls:
+                        tool_name = tool_call["name"]
+                        tool_args = tool_call["args"]
+                        yield f"[TRACE_THINK]{json.dumps({'step': step_num, 'thought': f'需要调用工具 {tool_name} 获取信息'}, ensure_ascii=False)}[/TRACE_THINK]\n"
+                        yield f"[TRACE_TOOL_CALL]{json.dumps({'name': tool_name, 'args': tool_args}, ensure_ascii=False)}[/TRACE_TOOL_CALL]\n"
+
+                # 追踪工具结果：当工具执行完成时
+                elif isinstance(msg, ToolMessage):
+                    tool_name = msg.name if msg.name else "unknown"
+                    tool_output = msg.content
+                    yield f"[TRACE_TOOL_RESULT]{json.dumps({'name': tool_name, 'output': tool_output}, ensure_ascii=False)}[/TRACE_TOOL_RESULT]\n"
+
+                # 最终文本回答
+                elif isinstance(msg, AIMessage) and msg.content:
+                    yield f"[TRACE_ANSWER]{msg.content.strip()}[/TRACE_ANSWER]\n"
+
+            # 更新已处理的消息数量
+            prev_msg_count = len(all_messages)
 
 
 if __name__ == '__main__':

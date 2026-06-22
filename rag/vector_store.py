@@ -1,3 +1,7 @@
+import os
+import warnings
+warnings.filterwarnings("ignore", message="capture()")
+
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from utils.config_handler import chroma_conf

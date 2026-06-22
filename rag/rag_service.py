@@ -30,6 +30,9 @@ class RagSummarizeService:
 
         context_docs = self.retriever_docs(query)
 
+        if not context_docs:
+            return "当前知识库未检索到相关信息，建议换个更具体或更宽泛的关键词重试。"
+
         context = ""
         counter = 0
         for doc in context_docs:
