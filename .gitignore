@@ -40,24 +40,11 @@ logs/
 # Runtime generated data
 # =========================
 chroma_db/
-temp_images/
-chat_history/
 
 # Optional: if you later generate temp reports locally
 tmp/
 temp/
 *.tmp
-
-# =========================
-# Model files
-# =========================
-checkpoints/
-models/
-
-# =========================
-# Data files
-# =========================
-data/img/
 
 # =========================
 # Streamlit
